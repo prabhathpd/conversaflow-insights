@@ -1,6 +1,5 @@
 
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Toaster } from "@/components/ui/toaster";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -13,7 +12,6 @@ export function AppLayout({ children }: AppLayoutProps) {
       <main className="flex-1 overflow-y-auto p-6">
         {children}
       </main>
-      <Toaster />
     </div>
   );
 }
