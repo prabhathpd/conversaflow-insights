@@ -15,24 +15,26 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <BrowserRouter>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Routes>
-          <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
-          <Route path="/calls" element={<AppLayout><CallRecordings /></AppLayout>} />
-          <Route path="/leads" element={<AppLayout><LeadManagement /></AppLayout>} />
-          <Route path="/deals" element={<AppLayout><DealPipeline /></AppLayout>} />
-          <Route path="/ai-assistant" element={<AppLayout><AIAssistant /></AppLayout>} />
-          <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
-    </QueryClientProvider>
-  </BrowserRouter>
-);
+const App = () => {
+  return (
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Routes>
+            <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
+            <Route path="/calls" element={<AppLayout><CallRecordings /></AppLayout>} />
+            <Route path="/leads" element={<AppLayout><LeadManagement /></AppLayout>} />
+            <Route path="/deals" element={<AppLayout><DealPipeline /></AppLayout>} />
+            <Route path="/ai-assistant" element={<AppLayout><AIAssistant /></AppLayout>} />
+            <Route path="/settings" element={<AppLayout><Settings /></AppLayout>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;
