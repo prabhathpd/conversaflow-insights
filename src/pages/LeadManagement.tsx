@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,14 +18,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLeads, getCalls } from "@/lib/mock-data";
-import { Lead, LeadIntent } from "@/lib/types";
+import { Lead, LeadIntent, EmailThread, NotificationType, FollowUp } from "@/lib/types";
 import { 
   Search, 
   Filter, 
@@ -40,9 +48,15 @@ import {
   X,
   MessageSquare,
   Slack,
-  Send
+  Send,
+  User,
+  DollarSign,
+  Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { EmailThreadPanel } from "@/components/leads/EmailThreadPanel";
+import { FollowUpPanel } from "@/components/leads/FollowUpPanel";
+import { LeadDetailPanel } from "@/components/leads/LeadDetailPanel";
 
 export default function LeadManagement() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -55,7 +69,10 @@ export default function LeadManagement() {
   const [emailFilter, setEmailFilter] = useState("");
   const [designationFilter, setDesignationFilter] = useState("");
   const [scoreMinFilter, setScoreMinFilter] = useState("");
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [showLeadDetail, setShowLeadDetail] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch leads data
@@ -114,6 +131,169 @@ export default function LeadManagement() {
     setScoreMinFilter("");
     setIntentFilter("all");
     setSearchTerm("");
+  };
+
+  const handleViewLead = (lead: Lead) => {
+    setSelectedLead(lead);
+    setShowLeadDetail(true);
+  };
+
+  const handleUpdateLead = (updatedData: Partial<Lead>) => {
+    if (!selectedLead) return;
+    
+    // Update the lead in the state
+    const updatedLeads = leads.map(lead => 
+      lead.id === selectedLead.id 
+        ? { ...lead, ...updatedData } 
+        : lead
+    );
+    
+    setLeads(updatedLeads);
+    setSelectedLead({ ...selectedLead, ...updatedData });
+  };
+
+  const handleSendEmail = (subject: string, body: string) => {
+    if (!selectedLead) return;
+    
+    // In a real app, this would send an actual email
+    // For this demo, we'll just add it to the email threads
+    const now = new Date().toISOString();
+    
+    const newMessage = {
+      id: `msg-${Date.now()}`,
+      sender: "sales@conversaflow.com",
+      recipient: selectedLead.email,
+      subject,
+      body,
+      date: now
+    };
+    
+    let updatedLeads = [...leads];
+    const leadIndex = updatedLeads.findIndex(l => l.id === selectedLead.id);
+    
+    if (leadIndex === -1) return;
+    
+    // If there's no emailThreads array or it's empty, create a new one
+    if (!updatedLeads[leadIndex].emailThreads || updatedLeads[leadIndex].emailThreads!.length === 0) {
+      const newThread: EmailThread = {
+        id: `thread-${Date.now()}`,
+        subject,
+        lastMessageDate: now,
+        messages: [newMessage]
+      };
+      
+      updatedLeads[leadIndex] = {
+        ...updatedLeads[leadIndex],
+        emailThreads: [newThread],
+        lastContact: now
+      };
+    } else {
+      // Find if there's an existing thread with this subject
+      const threadIndex = updatedLeads[leadIndex].emailThreads!.findIndex(
+        thread => thread.subject.toLowerCase() === subject.toLowerCase()
+      );
+      
+      if (threadIndex === -1) {
+        // Create a new thread
+        const newThread: EmailThread = {
+          id: `thread-${Date.now()}`,
+          subject,
+          lastMessageDate: now,
+          messages: [newMessage]
+        };
+        
+        updatedLeads[leadIndex] = {
+          ...updatedLeads[leadIndex],
+          emailThreads: [...updatedLeads[leadIndex].emailThreads!, newThread],
+          lastContact: now
+        };
+      } else {
+        // Add to existing thread
+        const updatedThreads = [...updatedLeads[leadIndex].emailThreads!];
+        updatedThreads[threadIndex] = {
+          ...updatedThreads[threadIndex],
+          lastMessageDate: now,
+          messages: [...updatedThreads[threadIndex].messages, newMessage]
+        };
+        
+        updatedLeads[leadIndex] = {
+          ...updatedLeads[leadIndex],
+          emailThreads: updatedThreads,
+          lastContact: now
+        };
+      }
+    }
+    
+    setLeads(updatedLeads);
+    
+    // Update the selected lead if it's open in the detail view
+    if (selectedLead.id === updatedLeads[leadIndex].id) {
+      setSelectedLead(updatedLeads[leadIndex]);
+    }
+  };
+
+  const handleCreateFollowUp = (type: NotificationType, dueDate: string, notes: string) => {
+    if (!selectedLead) return;
+    
+    const newFollowUp: FollowUp = {
+      id: `followup-${Date.now()}`,
+      type,
+      dueDate,
+      notes,
+      completed: false,
+      notificationSent: false
+    };
+    
+    const updatedLeads = leads.map(lead => {
+      if (lead.id === selectedLead.id) {
+        return {
+          ...lead,
+          followUps: lead.followUps ? [...lead.followUps, newFollowUp] : [newFollowUp]
+        };
+      }
+      return lead;
+    });
+    
+    setLeads(updatedLeads);
+    
+    // Update the selected lead if it's open in the detail view
+    const updatedLead = updatedLeads.find(l => l.id === selectedLead.id);
+    if (updatedLead) {
+      setSelectedLead(updatedLead);
+    }
+  };
+
+  const handleCompleteFollowUp = (followUpId: string) => {
+    if (!selectedLead) return;
+    
+    const updatedLeads = leads.map(lead => {
+      if (lead.id === selectedLead.id && lead.followUps) {
+        const updatedFollowUps = lead.followUps.map(followUp => 
+          followUp.id === followUpId 
+            ? { ...followUp, completed: true } 
+            : followUp
+        );
+        
+        return {
+          ...lead,
+          followUps: updatedFollowUps
+        };
+      }
+      return lead;
+    });
+    
+    setLeads(updatedLeads);
+    
+    // Update the selected lead if it's open in the detail view
+    const updatedLead = updatedLeads.find(l => l.id === selectedLead.id);
+    if (updatedLead) {
+      setSelectedLead(updatedLead);
+    }
+    
+    toast({
+      title: "Follow-up completed",
+      description: "Follow-up marked as completed successfully",
+    });
   };
 
   return (
@@ -259,6 +439,16 @@ export default function LeadManagement() {
                       <div className="bg-gray-100 text-gray-800 rounded-full px-2 py-0.5 text-xs">
                         Score: {lead.score}%
                       </div>
+                      {lead.projectValue && lead.projectValue > 0 && (
+                        <div className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                          <DollarSign className="h-3 w-3 mr-1" />
+                          {new Intl.NumberFormat('en-US', { 
+                            style: 'currency', 
+                            currency: 'USD',
+                            maximumFractionDigits: 0
+                          }).format(lead.projectValue)}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -285,7 +475,7 @@ export default function LeadManagement() {
                     <div className="flex flex-col h-full">
                       <div className="mb-2">
                         <p className="text-sm font-medium">Notes:</p>
-                        <p className="text-sm text-gray-600">{lead.notes || "No notes available"}</p>
+                        <p className="text-sm text-gray-600 line-clamp-2">{lead.notes || "No notes available"}</p>
                       </div>
                       <div className="mt-auto flex flex-wrap gap-2">
                         <Button size="sm" onClick={() => handleContactClick("Phone", lead)}>
@@ -299,6 +489,16 @@ export default function LeadManagement() {
                         <Button size="sm" variant="outline" onClick={() => handleContactClick("Meeting", lead)}>
                           <Calendar className="h-4 w-4 mr-2" />
                           Schedule
+                        </Button>
+                        
+                        {/* View Lead Details Button */}
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewLead(lead)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
                         </Button>
                         
                         {/* Multi-channel follow-up options */}
@@ -333,6 +533,50 @@ export default function LeadManagement() {
           ))
         )}
       </div>
+
+      {/* Lead Detail Dialog */}
+      <Dialog open={showLeadDetail} onOpenChange={setShowLeadDetail}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Lead Details: {selectedLead?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedLead && (
+            <Tabs defaultValue="details" className="mt-4">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="email">Email Threads</TabsTrigger>
+                <TabsTrigger value="followups">Follow-ups</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details">
+                <LeadDetailPanel 
+                  lead={selectedLead} 
+                  onUpdateLead={handleUpdateLead} 
+                />
+              </TabsContent>
+              
+              <TabsContent value="email">
+                <EmailThreadPanel 
+                  emailThreads={selectedLead.emailThreads || []} 
+                  leadEmail={selectedLead.email}
+                  onSendEmail={handleSendEmail}
+                />
+              </TabsContent>
+              
+              <TabsContent value="followups">
+                <FollowUpPanel 
+                  followUps={selectedLead.followUps || []}
+                  onCreateFollowUp={handleCreateFollowUp}
+                  onCompleteFollowUp={handleCompleteFollowUp}
+                />
+              </TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

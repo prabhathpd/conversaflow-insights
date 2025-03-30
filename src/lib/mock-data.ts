@@ -1,5 +1,4 @@
-
-import { Call, CallTone, Lead, LeadIntent, DealStage, DashboardStats, User } from "./types";
+import { Call, CallTone, Lead, LeadIntent, DealStage, DashboardStats, User, EmailThread, FollowUp } from "./types";
 
 // Mock calls data
 export const mockCalls: Call[] = [
@@ -110,7 +109,94 @@ export const mockCalls: Call[] = [
   }
 ];
 
-// Mock leads data
+// Mock email threads
+const mockEmailThreads: Record<string, EmailThread[]> = {
+  "lead-1": [
+    {
+      id: "thread-1",
+      subject: "Enterprise Plan Discussion",
+      lastMessageDate: "2023-09-14T10:30:00",
+      messages: [
+        {
+          id: "msg-1",
+          sender: "sales@conversaflow.com",
+          recipient: "john.smith@techcorp.com",
+          subject: "Enterprise Plan Discussion",
+          body: "Hello John, following up on our call about the enterprise plan. I've attached the pricing details as requested.",
+          date: "2023-09-13T15:30:00",
+          attachments: ["pricing.pdf"]
+        },
+        {
+          id: "msg-2",
+          sender: "john.smith@techcorp.com",
+          recipient: "sales@conversaflow.com",
+          subject: "Re: Enterprise Plan Discussion",
+          body: "Thanks for the information. I'll review with my team and get back to you by next week.",
+          date: "2023-09-14T10:30:00"
+        }
+      ]
+    }
+  ],
+  "lead-2": [
+    {
+      id: "thread-2",
+      subject: "Marketing Solutions Demo",
+      lastMessageDate: "2023-09-13T16:45:00",
+      messages: [
+        {
+          id: "msg-3",
+          sender: "sales@conversaflow.com",
+          recipient: "sarah.j@marketingsolutions.co",
+          subject: "Marketing Solutions Demo",
+          body: "Hi Sarah, I'd like to schedule a demo of our product for your team. When would be a good time?",
+          date: "2023-09-12T11:20:00"
+        },
+        {
+          id: "msg-4",
+          sender: "sarah.j@marketingsolutions.co",
+          recipient: "sales@conversaflow.com",
+          subject: "Re: Marketing Solutions Demo",
+          body: "Let's do next Tuesday at 2pm. Can you send a calendar invite?",
+          date: "2023-09-13T16:45:00"
+        }
+      ]
+    }
+  ]
+};
+
+// Mock follow-ups
+const mockFollowUps: Record<string, FollowUp[]> = {
+  "lead-1": [
+    {
+      id: "followup-1",
+      type: "email",
+      dueDate: "2023-09-20T10:00:00",
+      notes: "Send case studies about implementation time",
+      completed: false,
+      notificationSent: false
+    },
+    {
+      id: "followup-2",
+      type: "call",
+      dueDate: "2023-09-22T15:00:00",
+      notes: "Follow up about budget approval",
+      completed: false,
+      notificationSent: false
+    }
+  ],
+  "lead-3": [
+    {
+      id: "followup-3",
+      type: "meeting",
+      dueDate: "2023-09-18T13:00:00",
+      notes: "Technical demo with their engineering team",
+      completed: false,
+      notificationSent: true
+    }
+  ]
+};
+
+// Mock leads data with new fields
 export const mockLeads: Lead[] = [
   {
     id: "lead-1",
@@ -123,7 +209,12 @@ export const mockLeads: Lead[] = [
     calls: ["call-1"],
     lastContact: "2023-09-15T14:30:00",
     notes: "Decision maker, interested in enterprise plan",
-    dealStage: "meeting"
+    dealStage: "meeting",
+    industry: "Technology",
+    designation: "CTO",
+    projectValue: 75000,
+    emailThreads: mockEmailThreads["lead-1"],
+    followUps: mockFollowUps["lead-1"]
   },
   {
     id: "lead-2",
@@ -136,7 +227,12 @@ export const mockLeads: Lead[] = [
     calls: ["call-2"],
     lastContact: "2023-09-14T11:15:00",
     notes: "Marketing Director, evaluating several solutions",
-    dealStage: "contacted"
+    dealStage: "contacted",
+    industry: "Marketing",
+    designation: "Marketing Director",
+    projectValue: 45000,
+    emailThreads: mockEmailThreads["lead-2"],
+    followUps: []
   },
   {
     id: "lead-3",
@@ -149,7 +245,12 @@ export const mockLeads: Lead[] = [
     calls: ["call-3"],
     lastContact: "2023-09-13T16:45:00",
     notes: "Technical decision maker, needs API integration",
-    dealStage: "proposal"
+    dealStage: "proposal",
+    industry: "Software",
+    designation: "DevOps Lead",
+    projectValue: 120000,
+    emailThreads: [],
+    followUps: mockFollowUps["lead-3"]
   },
   {
     id: "lead-4",
@@ -162,7 +263,12 @@ export const mockLeads: Lead[] = [
     calls: ["call-4"],
     lastContact: "2023-09-12T13:20:00",
     notes: "Not interested currently, has existing contract",
-    dealStage: "new"
+    dealStage: "new",
+    industry: "Retail",
+    designation: "Operations Manager",
+    projectValue: 0,
+    emailThreads: [],
+    followUps: []
   },
   {
     id: "lead-5",
@@ -175,43 +281,14 @@ export const mockLeads: Lead[] = [
     calls: ["call-5"],
     lastContact: "2023-09-11T10:00:00",
     notes: "Price sensitive but ready to move quickly",
-    dealStage: "proposal"
+    dealStage: "proposal",
+    industry: "Finance",
+    designation: "CFO",
+    projectValue: 95000,
+    emailThreads: [],
+    followUps: []
   }
 ];
-
-// Mock users
-export const mockUsers: User[] = [
-  {
-    id: "user-1",
-    name: "Admin User",
-    email: "admin@conversaflow.com",
-    role: "admin",
-    avatar: "https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff"
-  },
-  {
-    id: "user-2",
-    name: "Sales Rep",
-    email: "sales@conversaflow.com",
-    role: "sales",
-    avatar: "https://ui-avatars.com/api/?name=Sales+Rep&background=2563EB&color=fff"
-  }
-];
-
-// Mock dashboard stats
-export const mockDashboardStats: DashboardStats = {
-  totalCalls: 27,
-  totalLeads: 15,
-  avgCallScore: 3.7,
-  newLeadsThisWeek: 5,
-  highIntentLeads: 7,
-  dealsPipeline: {
-    new: 3,
-    contacted: 5,
-    meeting: 4,
-    proposal: 2,
-    closed: 1
-  }
-};
 
 // Helper functions to get mock data
 export function getCalls(): Call[] {
@@ -245,3 +322,30 @@ export function getLeadsByDealStage(stage: DealStage): Lead[] {
 export function getCallsForLead(leadId: string): Call[] {
   return mockCalls.filter(call => call.leadId === leadId);
 }
+
+// Additional helper functions for email threads and follow-ups
+export function getEmailThreadsForLead(leadId: string): EmailThread[] {
+  const lead = getLeadById(leadId);
+  return lead?.emailThreads || [];
+}
+
+export function getFollowUpsForLead(leadId: string): FollowUp[] {
+  const lead = getLeadById(leadId);
+  return lead?.followUps || [];
+}
+
+// Mock dashboard stats
+export const mockDashboardStats: DashboardStats = {
+  totalCalls: 27,
+  totalLeads: 15,
+  avgCallScore: 3.7,
+  newLeadsThisWeek: 5,
+  highIntentLeads: 7,
+  dealsPipeline: {
+    new: 3,
+    contacted: 5,
+    meeting: 4,
+    proposal: 2,
+    closed: 1
+  }
+};

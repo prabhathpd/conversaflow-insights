@@ -2,6 +2,33 @@
 export type LeadIntent = "high" | "medium" | "low";
 export type CallTone = "happy" | "neutral" | "busy" | "annoyed";
 export type DealStage = "new" | "contacted" | "meeting" | "proposal" | "closed";
+export type NotificationType = "email" | "sms" | "call" | "meeting" | "other";
+
+export interface EmailThread {
+  id: string;
+  subject: string;
+  lastMessageDate: string;
+  messages: EmailMessage[];
+}
+
+export interface EmailMessage {
+  id: string;
+  sender: string;
+  recipient: string;
+  subject: string;
+  body: string;
+  date: string;
+  attachments?: string[];
+}
+
+export interface FollowUp {
+  id: string;
+  type: NotificationType;
+  dueDate: string;
+  notes?: string;
+  completed: boolean;
+  notificationSent: boolean;
+}
 
 export interface Call {
   id: string;
@@ -31,6 +58,9 @@ export interface Lead {
   dealStage?: DealStage;
   industry?: string;
   designation?: string;
+  projectValue?: number; // Added field for project value
+  emailThreads?: EmailThread[]; // Added for email threads
+  followUps?: FollowUp[]; // Added for follow-ups
 }
 
 export interface User {
