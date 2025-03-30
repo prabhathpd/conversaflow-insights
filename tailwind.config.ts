@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,26 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Call intent colors
+				intent: {
+					high: '#22C55E',
+					medium: '#F59E0B',
+					low: '#EF4444',
+				},
+				// Custom app colors
+				app: {
+					blue: {
+						light: '#60A5FA',
+						DEFAULT: '#2563EB',
+						dark: '#1E3A8A',
+					},
+					purple: {
+						light: '#A78BFA',
+						DEFAULT: '#7C3AED',
+						dark: '#4C1D95',
+					},
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -89,7 +109,10 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+			},
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
