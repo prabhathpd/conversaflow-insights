@@ -8,7 +8,8 @@ import { ToneBadge } from "@/components/ui/tone-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCalls, getLeads } from "@/lib/mock-data";
 import { Call, Lead } from "@/lib/types";
-import { Search, Calendar, PlayCircle, PauseCircle } from "lucide-react";
+import { Search, Calendar, PlayCircle, PauseCircle, FileText, MessageSquare } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CallRecordings() {
   const [calls, setCalls] = useState<Call[]>([]);
@@ -17,6 +18,9 @@ export default function CallRecordings() {
   const [selectedCall, setSelectedCall] = useState<Call | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [showFullTranscript, setShowFullTranscript] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Fetch calls data
@@ -57,6 +61,51 @@ export default function CallRecordings() {
       setIsPlaying(true);
     }
   };
+
+  const generateSummary = (call: Call) => {
+    setIsGeneratingSummary(true);
+    // Simulate AI summarization
+    setTimeout(() => {
+      setIsGeneratingSummary(false);
+      toast({
+        title: "Summary Generated",
+        description: "The call summary has been updated with AI insights.",
+      });
+    }, 1500);
+  };
+
+  const toggleTranscript = () => {
+    setShowFullTranscript(!showFullTranscript);
+  };
+
+  // Mock transcript content
+  const mockTranscript = `
+    [00:00] Agent: Hello, this is ConversaFlow sales team. How can I help you today?
+    
+    [00:05] Client: Hi there, I'm calling about your software solution. I saw it mentioned in a newsletter.
+    
+    [00:12] Agent: Great to hear that! Yes, our platform helps sales teams analyze calls and manage leads more effectively. Could you tell me a bit about your current process?
+    
+    [00:25] Client: Sure, we're currently using spreadsheets to track everything, and it's becoming a mess. We have about 15 salespeople and no good way to analyze their calls.
+    
+    [00:38] Agent: I understand completely. Many teams face that challenge as they grow. Our platform specifically addresses that by automatically recording and analyzing calls.
+    
+    [00:52] Client: That sounds promising. What kind of insights does your AI provide after calls?
+    
+    [01:00] Agent: Great question! Our AI analyzes tone, engagement levels, and key topics discussed. It also identifies potential follow-up items and can even suggest the best times to reconnect based on what was discussed.
+    
+    [01:20] Client: That's impressive. What about pricing? We're a mid-sized company.
+    
+    [01:25] Agent: We have several tiers designed for different team sizes. For 15 salespeople, I'd recommend our Growth plan which offers unlimited calls, full analytics, and CRM integration for $49 per user monthly.
+    
+    [01:40] Client: That seems reasonable compared to what we're looking at elsewhere. Do you offer a trial period?
+    
+    [01:47] Agent: Absolutely! We offer a 14-day full-feature trial with no credit card required. I'd be happy to set that up for you today if you're interested.
+    
+    [01:56] Client: Yes, that would be great. Let's proceed with that.
+    
+    [02:00] Agent: Excellent! I'll just need some basic information to get your trial account set up...
+  `;
 
   return (
     <div className="space-y-6">
@@ -131,13 +180,39 @@ export default function CallRecordings() {
                         </div>
                         <p className="text-sm text-gray-700">{call.summary}</p>
                         {selectedCall?.id === call.id && (
-                          <div className="mt-4 bg-gray-50 p-3 rounded-md border">
-                            <p className="text-xs font-semibold mb-1">Transcript Preview</p>
-                            <p className="text-sm">
-                              {call.transcriptUrl 
-                                ? "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam vehicula magna quis tortor cursus, nec auctor sem luctus. Sed interdum metus at metus commodo, ac efficitur velit tincidunt..."
-                                : "No transcript available for this call."}
-                            </p>
+                          <div className="mt-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="flex items-center">
+                                <FileText className="h-4 w-4 mr-1 text-gray-500" />
+                                <p className="text-xs font-semibold">Transcript</p>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={toggleTranscript}
+                              >
+                                {showFullTranscript ? "Show Less" : "Show More"}
+                              </Button>
+                            </div>
+                            <div className={`bg-gray-50 p-3 rounded-md border overflow-y-auto transition-all ${showFullTranscript ? 'max-h-96' : 'max-h-32'}`}>
+                              <pre className="text-sm whitespace-pre-wrap font-sans">
+                                {call.transcriptUrl ? mockTranscript : "No transcript available for this call."}
+                              </pre>
+                            </div>
+                            {call.transcriptUrl && (
+                              <div className="mt-2 flex justify-end">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => generateSummary(call)}
+                                  disabled={isGeneratingSummary}
+                                  className="flex items-center gap-1"
+                                >
+                                  <MessageSquare className="h-4 w-4" />
+                                  {isGeneratingSummary ? 'Summarizing...' : 'Summarize'}
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
