@@ -4,16 +4,57 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IntentBadge } from "@/components/ui/intent-badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getLeads, getCalls } from "@/lib/mock-data";
 import { Lead, LeadIntent } from "@/lib/types";
-import { Search, Filter, Phone, Clock, Mail, Calendar } from "lucide-react";
+import { 
+  Search, 
+  Filter, 
+  Phone, 
+  Clock, 
+  Mail, 
+  Calendar, 
+  Sliders, 
+  ChevronDown,
+  Briefcase,
+  Building,
+  Star,
+  X,
+  MessageSquare,
+  Slack,
+  Send
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LeadManagement() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [intentFilter, setIntentFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateFilter, setDateFilter] = useState("");
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [industryFilter, setIndustryFilter] = useState("");
+  const [emailFilter, setEmailFilter] = useState("");
+  const [designationFilter, setDesignationFilter] = useState("");
+  const [scoreMinFilter, setScoreMinFilter] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,15 +63,36 @@ export default function LeadManagement() {
     setLeads(allLeads);
   }, []);
 
-  // Filter leads based on search term and intent filter
+  // Filter leads based on search term and all filters
   const filteredLeads = leads.filter(lead => {
     const matchesSearch = 
       lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email.toLowerCase().includes(searchTerm.toLowerCase());
       
-    if (intentFilter === "all") return matchesSearch;
-    return matchesSearch && lead.intent === intentFilter;
+    const matchesIntent = intentFilter === "all" || lead.intent === intentFilter;
+    
+    const matchesCompany = !companyFilter || 
+      lead.company.toLowerCase().includes(companyFilter.toLowerCase());
+    
+    const matchesIndustry = !industryFilter || 
+      (lead.industry && lead.industry.toLowerCase().includes(industryFilter.toLowerCase()));
+    
+    const matchesEmail = !emailFilter || 
+      lead.email.toLowerCase().includes(emailFilter.toLowerCase());
+    
+    const matchesDesignation = !designationFilter || 
+      (lead.designation && lead.designation.toLowerCase().includes(designationFilter.toLowerCase()));
+    
+    const matchesScore = !scoreMinFilter || 
+      lead.score >= parseInt(scoreMinFilter);
+    
+    const matchesDate = !dateFilter || 
+      (new Date(lead.lastContact) >= new Date(dateFilter));
+    
+    return matchesSearch && matchesIntent && matchesCompany && 
+           matchesIndustry && matchesEmail && matchesDesignation && 
+           matchesScore && matchesDate;
   });
 
   // Sort leads by score (highest first)
@@ -41,6 +103,17 @@ export default function LeadManagement() {
       title: `${type} contact initiated`,
       description: `You're contacting ${lead.name} via ${type}`,
     });
+  };
+
+  const clearFilters = () => {
+    setDateFilter("");
+    setCompanyFilter("");
+    setIndustryFilter("");
+    setEmailFilter("");
+    setDesignationFilter("");
+    setScoreMinFilter("");
+    setIntentFilter("all");
+    setSearchTerm("");
   };
 
   return (
@@ -75,10 +148,96 @@ export default function LeadManagement() {
               <SelectItem value="low">Low Intent</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" className="w-full sm:w-auto">
-            <Filter className="mr-2 h-4 w-4" />
-            More Filters
-          </Button>
+          <Popover open={showFilters} onOpenChange={setShowFilters}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Sliders className="mr-2 h-4 w-4" />
+                Filters
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-4">
+              <div className="space-y-4">
+                <h3 className="font-medium text-sm">Lead Filters</h3>
+                
+                <div className="space-y-2">
+                  <label className="text-sm" htmlFor="date-filter">Contact Date After</label>
+                  <Input
+                    id="date-filter"
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm" htmlFor="company-filter">Company</label>
+                  <Input
+                    id="company-filter"
+                    placeholder="Filter by company"
+                    value={companyFilter}
+                    onChange={(e) => setCompanyFilter(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm" htmlFor="industry-filter">Industry</label>
+                  <Input
+                    id="industry-filter"
+                    placeholder="Filter by industry"
+                    value={industryFilter}
+                    onChange={(e) => setIndustryFilter(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm" htmlFor="email-filter">Email</label>
+                  <Input
+                    id="email-filter"
+                    placeholder="Filter by email"
+                    value={emailFilter}
+                    onChange={(e) => setEmailFilter(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm" htmlFor="designation-filter">Designation</label>
+                  <Input
+                    id="designation-filter"
+                    placeholder="Filter by designation"
+                    value={designationFilter}
+                    onChange={(e) => setDesignationFilter(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm" htmlFor="score-filter">Minimum Lead Score</label>
+                  <Input
+                    id="score-filter"
+                    type="number"
+                    placeholder="Min score (0-100)"
+                    min="0"
+                    max="100"
+                    value={scoreMinFilter}
+                    onChange={(e) => setScoreMinFilter(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                    <X className="mr-2 h-4 w-4" />
+                    Clear All
+                  </Button>
+                  <Button size="sm" onClick={() => setShowFilters(false)}>Apply Filters</Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -115,6 +274,12 @@ export default function LeadManagement() {
                       <Clock className="h-4 w-4 mr-2" />
                       Last contact: {new Date(lead.lastContact).toLocaleDateString()}
                     </p>
+                    {lead.designation && (
+                      <p className="text-sm text-gray-500 flex items-center">
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        {lead.designation}
+                      </p>
+                    )}
                   </div>
                   <div className="lg:col-span-2">
                     <div className="flex flex-col h-full">
@@ -135,6 +300,30 @@ export default function LeadManagement() {
                           <Calendar className="h-4 w-4 mr-2" />
                           Schedule
                         </Button>
+                        
+                        {/* Multi-channel follow-up options */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              More Options
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleContactClick("WhatsApp", lead)}>
+                              <MessageSquare className="h-4 w-4 mr-2 text-green-500" />
+                              WhatsApp
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleContactClick("Slack", lead)}>
+                              <Slack className="h-4 w-4 mr-2 text-purple-500" />
+                              Slack
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleContactClick("SMS", lead)}>
+                              <Send className="h-4 w-4 mr-2 text-blue-500" />
+                              SMS
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>

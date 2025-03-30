@@ -29,6 +29,8 @@ export interface Lead {
   lastContact: string;
   notes?: string;
   dealStage?: DealStage;
+  industry?: string;
+  designation?: string;
 }
 
 export interface User {
