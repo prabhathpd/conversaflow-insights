@@ -3,12 +3,17 @@
  * Service for interacting with the VAPI API for call recordings
  */
 
+// Store the VAPI public key directly for demo purposes
+const VAPI_PUBLIC_KEY = "5d11e062-e323-4f45-96e7-3d9035e41fa8";
+
 export async function fetchCallRecording(recordingUrl: string): Promise<string | null> {
-  const apiKey = localStorage.getItem("vapiApiKey");
+  // First try to get from localStorage, if not available, use the hardcoded public key
+  const apiKey = localStorage.getItem("vapiApiKey") || VAPI_PUBLIC_KEY;
   
-  if (!apiKey) {
-    console.error("VAPI API key not found. Please add it in Settings.");
-    return null;
+  // Store the key in localStorage if it's not already there
+  if (!localStorage.getItem("vapiApiKey")) {
+    localStorage.setItem("vapiApiKey", VAPI_PUBLIC_KEY);
+    console.log("VAPI API key automatically set up for demo purposes");
   }
   
   try {
