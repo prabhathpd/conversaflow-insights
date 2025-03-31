@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,19 @@ export default function Settings() {
   const [enableCallRecording, setEnableCallRecording] = useState(true);
   const { toast } = useToast();
 
+  // Load saved API keys on component mount
+  useEffect(() => {
+    const savedVapiKey = localStorage.getItem("vapiApiKey");
+    const savedOpenAIKey = localStorage.getItem("openAIApiKey");
+    if (savedVapiKey) setVapiKey(savedVapiKey);
+    if (savedOpenAIKey) setOpenAIKey(savedOpenAIKey);
+  }, []);
+
   const handleSaveAPISettings = () => {
+    // Save API keys to localStorage
+    localStorage.setItem("vapiApiKey", vapiKey);
+    localStorage.setItem("openAIApiKey", openAIKey);
+    
     toast({
       title: "Settings saved",
       description: "Your API settings have been updated successfully.",

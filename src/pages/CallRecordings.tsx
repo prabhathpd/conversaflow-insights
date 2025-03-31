@@ -1,14 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CallScore } from "@/components/ui/call-score";
 import { ToneBadge } from "@/components/ui/tone-badge";
+import { AudioPlayer } from "@/components/ui/audio-player";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCalls, getLeads } from "@/lib/mock-data";
 import { Call, Lead } from "@/lib/types";
-import { Search, Calendar, PlayCircle, PauseCircle, FileText, MessageSquare } from "lucide-react";
+import { Search, Calendar, FileText, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CallRecordings() {
@@ -16,13 +16,17 @@ export default function CallRecordings() {
   const [leads, setLeads] = useState<Record<string, Lead>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCall, setSelectedCall] = useState<Call | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [filter, setFilter] = useState("all");
   const [showFullTranscript, setShowFullTranscript] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { toast } = useToast();
+  const [apiKeyMissing, setApiKeyMissing] = useState(false);
 
   useEffect(() => {
+    // Check if API key exists
+    const apiKey = localStorage.getItem("vapiApiKey");
+    setApiKeyMissing(!apiKey);
+    
     // Fetch calls data
     const allCalls = getCalls();
     setCalls(allCalls);
@@ -52,15 +56,6 @@ export default function CallRecordings() {
   const sortedCalls = [...filteredCalls].sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
-
-  const handlePlayToggle = (call: Call) => {
-    if (selectedCall?.id === call.id) {
-      setIsPlaying(!isPlaying);
-    } else {
-      setSelectedCall(call);
-      setIsPlaying(true);
-    }
-  };
 
   const generateSummary = (call: Call) => {
     setIsGeneratingSummary(true);
@@ -116,6 +111,23 @@ export default function CallRecordings() {
         </p>
       </div>
 
+      {apiKeyMissing && (
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-4">
+          <h3 className="text-yellow-800 font-medium">VAPI API Key Missing</h3>
+          <p className="text-yellow-700 text-sm mt-1">
+            You need to add your VAPI API key in Settings to access call recordings.
+          </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2 text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+            onClick={() => window.location.href = "/settings"}
+          >
+            Go to Settings
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
@@ -156,19 +168,7 @@ export default function CallRecordings() {
               <CardContent className="p-4">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2">
-                    <div className="flex items-start gap-3">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handlePlayToggle(call)}
-                        className="mt-1"
-                      >
-                        {selectedCall?.id === call.id && isPlaying ? (
-                          <PauseCircle className="h-10 w-10 text-app-blue" />
-                        ) : (
-                          <PlayCircle className="h-10 w-10 text-gray-400 hover:text-app-blue" />
-                        )}
-                      </Button>
+                    <div className="flex flex-col gap-3">
                       <div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
                           <h3 className="font-semibold">
@@ -179,7 +179,14 @@ export default function CallRecordings() {
                           </span>
                         </div>
                         <p className="text-sm text-gray-700">{call.summary}</p>
-                        {selectedCall?.id === call.id && (
+                      </div>
+
+                      {selectedCall?.id === call.id && (
+                        <div>
+                          <div className="mb-3">
+                            <AudioPlayer recordingUrl={call.recordingUrl} />
+                          </div>
+                          
                           <div className="mt-4">
                             <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center">
@@ -214,8 +221,8 @@ export default function CallRecordings() {
                               </div>
                             )}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div>
