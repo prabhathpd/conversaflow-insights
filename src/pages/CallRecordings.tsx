@@ -27,6 +27,16 @@ export default function CallRecordings() {
     const apiKey = localStorage.getItem("vapiApiKey");
     setApiKeyMissing(!apiKey);
     
+    if (!apiKey) {
+      toast({
+        title: "VAPI API Key Missing",
+        description: "For the best experience, please set up your VAPI API key in Settings or use the Auto-Configure option from the home page.",
+        variant: "destructive"
+      });
+    } else {
+      console.log("VAPI API key found in localStorage");
+    }
+    
     // Fetch calls data
     const allCalls = getCalls();
     setCalls(allCalls);
@@ -37,7 +47,7 @@ export default function CallRecordings() {
       leadsMap[lead.id] = lead;
     });
     setLeads(leadsMap);
-  }, []);
+  }, [toast]);
 
   // Filter calls based on search term and filter
   const filteredCalls = calls.filter(call => {

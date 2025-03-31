@@ -1,9 +1,9 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { fetchCallRecording } from "@/lib/vapi-service";
+import { useToast } from "@/hooks/use-toast";
 
 interface AudioPlayerProps {
   recordingUrl: string;
@@ -21,6 +21,7 @@ export function AudioPlayer({ recordingUrl }: AudioPlayerProps) {
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const animationRef = useRef<number>();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Fetch the recording from VAPI
@@ -29,23 +30,37 @@ export function AudioPlayer({ recordingUrl }: AudioPlayerProps) {
       setError(null);
       
       try {
+        console.log("Fetching recording URL:", recordingUrl);
+        // For demo, use the direct URL provided in mock data
+        // In a real app, this would be transformed through the VAPI API
         const url = await fetchCallRecording(recordingUrl);
         
         if (!url) {
           setError("Failed to load audio. Please check your VAPI API key in settings.");
+          toast({
+            title: "Audio Loading Error",
+            description: "Could not load the recording. The VAPI API key may be missing or invalid.",
+            variant: "destructive"
+          });
         } else {
+          console.log("Audio URL set to:", url);
           setAudioUrl(url);
         }
       } catch (err) {
+        console.error("Error in loadAudio:", err);
         setError("An error occurred while loading the audio.");
-        console.error(err);
+        toast({
+          title: "Error",
+          description: "Failed to load the audio recording.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
     
     loadAudio();
-  }, [recordingUrl]);
+  }, [recordingUrl, toast]);
 
   const onLoadedMetadata = () => {
     if (audioRef.current) {
@@ -130,6 +145,8 @@ export function AudioPlayer({ recordingUrl }: AudioPlayerProps) {
             src={audioUrl || undefined}
             onLoadedMetadata={onLoadedMetadata}
             onEnded={() => setIsPlaying(false)}
+            controls
+            className="w-full mb-2"
           />
           
           <div className="flex flex-col gap-2">
